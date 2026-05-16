@@ -30,19 +30,82 @@ bancario e un server. Definisce esattamente come:
 
 ## 2. Struttura del pacchetto wire
 
+La struttura del pacchetto è composta da quattro blocchi principali. Per superare i limiti di visualizzazione ed evitare distorsioni, ogni sezione è dettagliata individualmente qui sotto, mostrando la corretta mappatura dei byte (32 bit per riga).
+
+```mermaid
+block-beta
+  columns 1
+  block:packet
+    Header["1. Header (8 bytes)"]
+    AuthBlock["2. AuthBlock (28 bytes)"]
+    Body["3. Body (variabile)"]
+    Trailer["4. Trailer (64 bytes - Ed25519)"]
+  end
+```
+
+### 1. Header (8 bytes)
+
 ```mermaid
 packet-beta
-title Struttura Pacchetto Wire (Big-Endian)
-0-31: "PL (4 bytes)"
-32-39: "VER (1 byte)"
-40-47: "OP (1 byte)"
-48-55: "FLG (1 byte)"
-56-63: "RSV (1 byte)"
-64-191: "UserId (16 bytes)"
-192-223: "SeqNum (4 bytes)"
-224-287: "Nonce (8 bytes)"
-288-311: "Body (N bytes)"
-312-823: "Ed25519 Sig (64 bytes)"
+title Dettaglio Header (8 bytes)
+0-31: "Payload Length (4 bytes)"
+32-39: "Version (1 byte)"
+40-47: "OpCode (1 byte)"
+48-55: "Flag (1 byte)"
+56-63: "Reserved (1 byte)"
+```
+
+### 2. AuthBlock (28 bytes)
+
+```mermaid
+packet-beta
+title Dettaglio AuthBlock (28 bytes)
+0-31: "UserId (UUID) - Byte 0-3"
+32-63: "UserId (UUID) - Byte 4-7"
+64-95: "UserId (UUID) - Byte 8-11"
+96-127: "UserId (UUID) - Byte 12-15"
+128-159: "SequenceNumber (4 bytes)"
+160-191: "Nonce - Byte 0-3"
+192-223: "Nonce - Byte 4-7"
+```
+
+### 3. Body (Dimensione variabile)
+
+Il Body contiene zero o più campi, ciascuno formattato come segue:
+
+```mermaid
+packet-beta
+title Formato di un singolo Body Field
+0-7: "FieldID (1 byte)"
+8-15: "WireType (1 byte)"
+16-31: "Size (2 bytes)"
+32-63: "Data (primi 4 bytes)"
+64-95: "Data (byte successivi...)"
+```
+
+### 4. Trailer (64 bytes)
+
+Contiene la firma Ed25519 dell'intero pacchetto (Header + AuthBlock + Body). A scopo illustrativo, sono mostrate solo le righe iniziali e finali per rappresentare i 64 byte (16 blocchi da 4 byte).
+
+```mermaid
+packet-beta
+title Dettaglio Trailer (64 bytes)
+0-31: "Signature - Byte 0-3"
+32-63: "Signature - Byte 4-7"
+64-95: "Signature - Byte 8-11"
+96-127: "..."
+128-159: "..."
+160-191: "..."
+192-223: "..."
+224-255: "..."
+256-287: "..."
+288-319: "..."
+320-351: "..."
+352-383: "..."
+384-415: "..."
+416-447: "..."
+448-479: "Signature - Byte 56-59"
+480-511: "Signature - Byte 60-63"
 ```
 
 ---
@@ -278,5 +341,3 @@ Ogni sezione è **completamente indipendente** dalle altre.
 ## Riferimenti
 
 - [README.md](README.md) — Quick start e documentazione generale
-- [DOCUMENTAZIONE_CAPOLAVORO.md](DOCUMENTAZIONE_CAPOLAVORO.md) — Documento completo per E-Portfolio
-- [FORM_RIEPILOGO.md](FORM_RIEPILOGO.md) — Riepilogo campi modulo

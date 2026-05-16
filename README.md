@@ -26,21 +26,27 @@ Every packet is self-framing and self-describing — no JSON, no XML, no HTTP.
 ## Packet Structure
 
 ```mermaid
+block-beta
+  columns 1
+  block:packet
+    Header["1. Header (8 bytes)"]
+    AuthBlock["2. AuthBlock (28 bytes)"]
+    Body["3. Body (variable)"]
+    Trailer["4. Trailer (64 bytes - Ed25519)"]
+  end
+```
+
+### 1. Header (8 bytes) — Fixed-size frame prefix
+
+```mermaid
 packet-beta
-title BancarioFaccia Packet Structure
+title Header Format (8 bytes)
 0-31: "PayloadLength (4 bytes)"
 32-39: "Version (1 byte)"
 40-47: "OpCode (1 byte)"
 48-55: "Flag (1 byte)"
 56-63: "Reserved (1 byte)"
-64-191: "UserId (16 bytes)"
-192-223: "SequenceNumber (4 bytes)"
-224-287: "Nonce (8 bytes)"
-288-311: "Body (variable length)"
-312-823: "Signature (64 bytes)"
 ```
-
-### 1. Header (8 bytes) — Fixed-size frame prefix
 
 | Offset | Size | Field         | Description                              |
 |--------|------|---------------|------------------------------------------|
@@ -54,6 +60,18 @@ The 4-byte payload length at offset 0 enables **TCP framing**: after reading exa
 bytes, the receiver knows exactly how many more bytes to read for the complete packet.
 
 ### 2. AuthBlock (28 bytes) — Identity & anti-replay
+
+```mermaid
+packet-beta
+title AuthBlock Format (28 bytes)
+0-31: "UserId (UUID) - Bytes 0-3"
+32-63: "UserId (UUID) - Bytes 4-7"
+64-95: "UserId (UUID) - Bytes 8-11"
+96-127: "UserId (UUID) - Bytes 12-15"
+128-159: "SequenceNumber (4 bytes)"
+160-191: "Nonce - Bytes 0-3"
+192-223: "Nonce - Bytes 4-7"
+```
 
 | Offset | Size | Field          | Description                           |
 |--------|------|----------------|---------------------------------------|
@@ -73,7 +91,8 @@ title Body Field Wire Format
 0-7: "FieldID (1 byte)"
 8-15: "WireType (1 byte)"
 16-31: "Size (2 bytes)"
-32-63: "Data (N bytes)"
+32-63: "Data (first 4 bytes)"
+64-95: "Data (next bytes...)"
 ```
 
 **Supported WireTypes:**
@@ -89,6 +108,27 @@ title Body Field Wire Format
 | 0x07 | `BYTE_ARRAY` | Raw bytes                      |
 
 ### 4. Trailer (64 bytes) — Ed25519 signature
+
+```mermaid
+packet-beta
+title Trailer Format (64 bytes)
+0-31: "Signature - Bytes 0-3"
+32-63: "Signature - Bytes 4-7"
+64-95: "Signature - Bytes 8-11"
+96-127: "..."
+128-159: "..."
+160-191: "..."
+192-223: "..."
+224-255: "..."
+256-287: "..."
+288-319: "..."
+320-351: "..."
+352-383: "..."
+384-415: "..."
+416-447: "..."
+448-479: "Signature - Bytes 56-59"
+480-511: "Signature - Bytes 60-63"
+```
 
 Ed25519 signature over `Header + AuthBlock + Body`:
 - 64 bytes, fixed
@@ -234,9 +274,6 @@ protocol/
 ├── test.java                  # Dev scratch
 ├── README.md
 ├── ARCHITETTURA.md
-├── DOCUMENTAZIONE_CAPOLAVORO.md
-├── FORM_RIEPILOGO.md
-├── CONTRIBUTING.md
 └── LICENSE
 ```
 
